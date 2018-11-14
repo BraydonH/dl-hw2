@@ -23,6 +23,18 @@ matrix variance(matrix x, matrix m, int spatial)
 {
     matrix v = make_matrix(1, x.cols/spatial);
     // TODO: 7.1 - calculate variance
+    // matrix m is mean for each filter accross batch
+    int filters = x.cols / spatial;
+    for (int i = 0; i < x.rows; i++) {
+        for (int j = 0; j < x.cols; j++) {
+            float delta = m.data[j / spatial] - x.data[i*x.cols + j];
+            v.data[j / spatial] += pow(delta, 2);
+        }
+    }    
+    
+    for(int i = 0; i < m.cols; i++){
+        v.data[i] = v.data[i] / (x.rows * spatial);
+    }
     return v;
 }
 
