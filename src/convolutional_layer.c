@@ -35,6 +35,19 @@ void backward_convolutional_bias(matrix delta, matrix db)
     }
 }
 
+
+float get_padded_pixel(image im, int x, int y, int c)
+{
+    if(x >= im.w) return 0;
+    if(y >= im.h) return 0;
+    if(x < 0) return 0;
+    if(y < 0) return 0;
+    
+    assert(c >= 0);
+    assert(c < im.c);
+    return im.data[x + im.w*(y + im.h*c)];
+}
+
 // Make a column matrix out of an image
 // image im: image to process
 // int size: kernel size for convolution operation
@@ -49,9 +62,26 @@ matrix im2col(image im, int size, int stride)
     matrix col = make_matrix(rows, cols);
 
     // TODO: 5.1 - fill in the column matrix
+    for (int c = 0; c < im.c; ++c){
+        for (int fidx = 0; fidx < size*size; ++fidx){
+            int dy = fidx / size - (size / 2);
+            int dx = fidx % size - (size / 2);
+
+            for (int y = 0; y < outh; y++) {
+                for (int x = 0; x < outw; x++) {
+                    int outIndex = (/*row*/x + (y * outw)) 
+                    /*column before c*/ + (cols * fidx) 
+                    /*columns after c*/ + (cols * size * size * c);
+                    float px = get_padded_pixel(im, (x * stride) + dx, (y * stride) + dy, c);
+                    col.data[outIndex] = px;
+                }
+            }
+        }
+    }
 
     return col;
 }
+
 
 // The reverse of im2col, add elements back into image
 // matrix col: column matrix to put back into image
@@ -62,11 +92,29 @@ void col2im(matrix col, int size, int stride, image im)
 {
     int outw = (im.w-1)/stride + 1;
     int outh = (im.h-1)/stride + 1;
-    int rows = im.c*size*size;
     int cols = outw * outh;
 
     // TODO: 5.2 - add values into image im from the column matrix
 
+    for (int c = 0; c < im.c; ++c){
+        for (int fidx = 0; fidx < size*size; ++fidx){
+            int dy = fidx / size - (size / 2);
+            int dx = fidx % size - (size / 2);
+
+            for (int y = 0; y < outh; y++) {
+                for (int x = 0; x < outw; x++) {
+                    int outIndex = (/*row*/x + (y * outw)) 
+                    /*column before c*/ + (cols * fidx) 
+                    /*columns after c*/ + (cols * size * size * c);
+                    int imX = (x * stride) + dx;
+                    int imY = (y * stride) + dy;
+                    if (imX > 0 && imX < im.w && imY > 0 && imY < im.h) {
+                        im.data[imX + (imY * im.w) + (im.w * im.h * c)] += col.data[outIndex];
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Run a convolutional layer on input
@@ -151,6 +199,9 @@ void backward_convolutional_layer(layer l, matrix prev_delta)
 void update_convolutional_layer(layer l, float rate, float momentum, float decay)
 {
     // TODO: 5.3 Update the weights, similar to the connected layer.
+    axpy_matrix(-decay, l.w, l.dw);
+    axpy_matrix(rate, l.dw, l.w);
+    scal_matrix(momentum, l.dw);
 }
 
 // Make a new convolutional layer

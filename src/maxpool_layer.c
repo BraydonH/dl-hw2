@@ -16,7 +16,27 @@ matrix forward_maxpool_layer(layer l, matrix in)
     matrix out = make_matrix(in.rows, outw*outh*l.channels);
 
     // TODO: 6.1 - iterate over the input and fill in the output with max values
-
+    for (int i = 0; i < in.rows; i++) {
+        for (int c = 0; c < l.channels; c++) {
+            for (int y = 0; y < outh; y++) {
+                for (int x = 0; x < outw; x++) {
+                    for (int fidx = 0; fidx < l.size * l.size; fidx++) {
+                        int dx = fidx % l.size;
+                        int dy = fidx / l.size;
+                        int imX = (x * l.stride) + dx;
+                        int imY = (y * l.stride) + dy;
+                        if (imX < l.width && imY < l.height) {
+                            int inIdx = imX + (l.width * (imY + l.height * (c + l.channels * i)));
+                            int outIdx = x + (outw * (y + outh * (c + l.channels * i)));
+                            if (in.data[inIdx] > out.data[outIdx]) {
+                                out.data[outIdx] = in.data[inIdx];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     l.in[0] = in;
     free_matrix(l.out[0]);
     l.out[0] = out;
@@ -40,7 +60,31 @@ void backward_maxpool_layer(layer l, matrix prev_delta)
     // TODO: 6.2 - find the max values in the input again and fill in the
     // corresponding delta with the delta from the output. This should be
     // similar to the forward method in structure.
-
+    for (int i = 0; i < in.rows; i++) {
+        for (int c = 0; c < l.channels; c++) {
+            for (int y = 0; y < outh; y++) {
+                for (int x = 0; x < outw; x++) {
+                    int maxInIdx = (x * l.stride) + (l.width * ((y * l.stride) + l.height * (c + l.channels * i)));
+                    int max = in.data[maxInIdx];
+                    int outIdx = x + (outw * (y + outh * (c + l.channels * i)));
+                    for (int fidx = 1; fidx < l.size * l.size; fidx++) {
+                        int dx = fidx % l.size;
+                        int dy = fidx / l.size;
+                        int imX = (x * l.stride) + dx;
+                        int imY = (y * l.stride) + dy;
+                        if (imX < l.width && imY < l.height) {
+                            int inIdx = imX + (l.width * (imY + l.height * (c + l.channels * i)));
+                            if (in.data[inIdx] > max) {
+                                maxInIdx = inIdx;
+                                max = in.data[inIdx];
+                            }
+                        }
+                    }
+                    prev_delta.data[maxInIdx] = delta.data[outIdx];                    
+                }
+            }
+        }
+    }
 }
 
 // Update maxpool layer
