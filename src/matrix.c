@@ -5,6 +5,60 @@
 #include <assert.h>
 #include <math.h>
 
+// int main( int argc, char* argv[] ) {
+//     matrix m = random_matrix(5, 5, 1);
+//     matrix mPrime = copy_matrix(m);
+//     printf("Matrix m:");
+//     print_matrix(m);
+//     // test copy
+//     printf("\nMatrix mPrime:");
+//     print_matrix(mPrime);
+    
+//     // test transpose
+//     matrix mTranspose = transpose_matrix(m);
+//     printf("\n Matrix mTranspose:");
+//     print_matrix(mTranspose);
+
+//     // test axpy_matrix
+//     matrix simple = make_matrix( 3, 3);
+//     for ( int i = 0; i < 9; i++) {
+//         simple.data[i] = i;
+//     }
+//     matrix lessSimple = make_matrix( 3, 3);
+//     for ( int i = 0; i < 9; i++ ) {
+//         lessSimple.data[i] = 3 - (i % 3);
+//     }
+
+//     printf("\n Matrix simple:");
+//     print_matrix(simple);    
+//     printf("\n Matrix lessSimple:");
+
+//     print_matrix(lessSimple);
+//     axpy_matrix(2, simple, lessSimple);
+    
+//     printf("\n Matrix lessSimple after axpy:");
+//     print_matrix(lessSimple);
+
+//     // test matmul
+//     matrix product = matmul(simple, lessSimple);
+//     printf("\n Matrix product:");
+//     print_matrix(product);
+
+//     // test non-square x square
+//     matrix non_square = make_matrix(3,4);
+//     for (int i = 0; i < non_square.cols * non_square.rows; i++) {
+//         non_square.data[i] = i % 5;
+//     }
+//     printf("\n Matrix non_square:");
+//     print_matrix(non_square);
+//     printf("\n Matrix simple");
+//     print_matrix(simple);
+//     product = matmul(simple, non_square);
+
+//     printf("\n Matrix product with simple:");
+//     print_matrix(product);
+
+// }
 
 // Make empty matrix filled with zeros
 // int rows: number of rows in matrix
@@ -30,7 +84,7 @@ matrix random_matrix(int rows, int cols, float s)
     int i, j;
     for(i = 0; i < rows; ++i){
         for(j = 0; j < cols; ++j){
-            m.data[i*cols + j] = 2*s*((float)rand()/RAND_MAX) - s;    
+            m.data[i*cols + j] = 2*s*(rand()%1000/1000.0) - s;    
         }
     }
     return m;
@@ -52,7 +106,11 @@ matrix copy_matrix(matrix m)
 {
     matrix c = make_matrix(m.rows, m.cols);
     // TODO: 1.1 - Fill in the new matrix
-
+    for ( int i = 0; i < m.rows; i++ ) {
+        for ( int j = 0; j < m.cols; j++ ) {
+            c.data[j + (i * m.cols)] = m.data[j + (i * m.cols)];
+        }
+    }
 
     return c;
 }
@@ -63,8 +121,13 @@ matrix copy_matrix(matrix m)
 matrix transpose_matrix(matrix m)
 {
     // TODO: 1.2 - Make a matrix the correct size, fill it in
-    matrix t = make_matrix(1,1);
-
+    matrix t = make_matrix(m.cols, m.rows);
+    // iterate over m row by row
+    for ( int i = 0; i < m.rows; i++ ) {
+        for ( int j = 0; j < m.cols; j++ ) {
+            t.data[i + (j * t.cols)] = m.data[j + (i * m.cols)];
+        }
+    }
 
     return t;
 }
@@ -78,6 +141,11 @@ void axpy_matrix(float a, matrix x, matrix y)
     assert(x.cols == y.cols);
     assert(x.rows == y.rows);
     // TODO: 1.3 - Perform the weighted sum, store result back in y
+    for ( int i = 0; i < x.rows; i++ ) {
+        for ( int j = 0; j < x.cols; j++ ) {
+            y.data[j + (i * x.cols)] += (a * x.data[j + (i * x.cols)]);
+        }
+    }
 }
 
 // Perform matrix multiplication a*b, return result
@@ -87,7 +155,17 @@ matrix matmul(matrix a, matrix b)
 {
     matrix c = make_matrix(a.rows, b.cols);
     // TODO: 1.4 - Implement matrix multiplication. Make sure it's fast!
-
+    assert(a.cols == b.rows);
+    
+    for (int i = 0; i < a.rows; i++) {
+        for (int k = 0; k < a.cols; k++) {
+            float x = a.data[k + (i * a.cols)];
+            for (int j = 0; j < b.cols; j++) {
+                float y = b.data[j + (k * b.cols)];
+                c.data[j + (i * b.cols)] += x * y;
+            }
+        }
+    }
 
 
     return c;
