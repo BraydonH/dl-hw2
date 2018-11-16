@@ -1,13 +1,13 @@
 from uwnet import *
 
 def conv_net():
-    l = [   make_convolutional_layer(32, 32, 3, 8, 3, 1, LRELU),
+    l = [   make_convolutional_layer(32, 32, 3, 8, 3, 1, LRELU, 1),
             make_maxpool_layer(32, 32, 8, 3, 2),
-            make_convolutional_layer(16, 16, 8, 16, 3, 1, LRELU),
+            make_convolutional_layer(16, 16, 8, 16, 3, 1, LRELU, 1),
             make_maxpool_layer(16, 16, 16, 3, 2),
-            make_convolutional_layer(8, 8, 16, 32, 3, 1, LRELU),
+            make_convolutional_layer(8, 8, 16, 32, 3, 1, LRELU, 1),
             make_maxpool_layer(8, 8, 32, 3, 2),
-            make_convolutional_layer(4, 4, 32, 64, 3, 1, LRELU),
+            make_convolutional_layer(4, 4, 32, 64, 3, 1, LRELU, 1),
             make_maxpool_layer(4, 4, 64, 3, 2),
             make_connected_layer(256, 10, SOFTMAX)]
     return make_net(l)
@@ -21,13 +21,21 @@ print
 print("making model...")
 batch = 128
 iters = 5000
-rate = .01
+rate = .1
 momentum = .9
 decay = .005
 
 m = conv_net()
 print("training...")
-train_image_classifier(m, train, batch, iters, rate, momentum, decay)
+train_image_classifier(m, train, batch, 1000, rate, momentum, decay)
+rate = rate / 2
+train_image_classifier(m, train, batch, 1000, rate, momentum, decay)
+rate = rate / 2
+train_image_classifier(m, train, batch, 1000, rate, momentum, decay)
+rate = rate / 2
+train_image_classifier(m, train, batch, 1000, rate, momentum, decay)
+rate = rate / 2
+train_image_classifier(m, train, batch, 1000, rate, momentum, decay)
 print("done")
 print
 
@@ -46,3 +54,8 @@ print("test accuracy:     %f", accuracy_net(m, test))
 # 3072 input
 # 72 out
 
+# without BN: ('training accuracy: %f', 0.5964599847793579)
+#             ('test accuracy:     %f', 0.5753999948501587)
+
+# With BN: ('training accuracy: %f', 0.6926000118255615)
+#          ('test accuracy:     %f', 0.6563000082969666)
